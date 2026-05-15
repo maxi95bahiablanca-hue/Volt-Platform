@@ -19,100 +19,37 @@
         .form-input:focus { border-color: #ffdb15; box-shadow: 0 0 15px rgba(255, 219, 21, 0.2); }
         .btn-volt { width: 100%; background: #ffdb15; color: #000; border: none; border-radius: 12px; padding: 18px; font-weight: 900; font-size: 1rem; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
         .btn-volt:hover { background: #fff; transform: translateY(-3px); }
-        .role-switch { display: flex; gap: 10px; margin-bottom: 30px; }
-        .role-btn { flex: 1; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; border: 1px solid #333; text-align: center; }
-        .role-btn.active { background: #ffdb15; color: #000; border-color: #ffdb15; }
-        
-        /* Custom Leaflet Dark */
-        .leaflet-container { background: #111 !important; }
         .status-badge { position: absolute; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.8); padding: 15px 25px; border-radius: 15px; border: 1px solid #333; }
     </style>
 </head>
 <body>
     <div id="map"></div>
-
     <div class="sidebar">
         <div class="logo">⚡ VOLT</div>
-        
-        <div class="role-switch">
-            <div class="role-btn active">Cliente</div>
-            <div class="role-btn" onclick="location.href='/onboarding.html'">Trabajador</div>
-        </div>
-
         <div id="request-flow">
             <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter">PEDÍ UN SERVICIO</h2>
-            <p class="text-gray-500 mb-8 text-sm">Tu ubicación se detecta automáticamente del mapa</p>
-
+            <p class="text-gray-500 mb-8 text-sm">Tu ubicación se detecta automáticamente</p>
             <label class="form-label">TU NOMBRE</label>
-            <input type="text" id="client-name" class="form-input" placeholder="Ej: Juan Pérez">
-
+            <input type="text" class="form-input" placeholder="Ej: Juan Pérez">
             <label class="form-label">TIPO DE SERVICIO</label>
-            <select id="service-type" class="form-input">
-                <option value="">Elegí un servicio...</option>
+            <select class="form-input">
                 <option>Electricista</option>
                 <option>Plomero</option>
-                <option>Gasista</option>
             </select>
-
-            <label class="form-label">DESCRIPCIÓN DEL PROBLEMA</label>
-            <textarea id="job-desc" class="form-input" rows="4" placeholder="Describí brevemente qué necesitás..."></textarea>
-
-            <label class="form-label">TU UBICACIÓN</label>
-            <div class="form-input text-green-500 font-bold text-xs flex align-center gap-2">
-                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse mt-1"></span> Ubicación detectada ✓
-            </div>
-
-            <button onclick="createJob()" class="btn-volt">⚡ Buscar profesionales</button>
-        </div>
-
-        <div id="quote-flow" class="hidden">
-            <!-- Lógica de presupuestos aquí -->
+            <button onclick="alert('Buscando...')" class="btn-volt">⚡ Buscar profesionales</button>
         </div>
     </div>
-
-    <div class="status-badge">
-        <div class="flex items-center gap-3">
-            <span class="relative flex h-3 w-3">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
-            </span>
-            <span class="text-xs font-black uppercase tracking-widest" id="live-count">VOLT — En vivo</span>
-        </div>
-        <div class="mt-3 space-y-2">
-            <div class="flex items-center gap-2 text-[10px] text-gray-400">
-                <div class="w-2 h-2 bg-yellow-400 rounded-full"></div> Trabajadores
-            </div>
-            <div class="flex items-center gap-2 text-[10px] text-gray-400">
-                <div class="w-2 h-2 bg-blue-500 rounded-full"></div> Tu ubicación
-            </div>
-            <div class="flex items-center gap-2 text-[10px] text-gray-400">
-                <div class="w-2 h-2 bg-red-500 rounded-full"></div> Pedidos activos
-            </div>
-        </div>
-    </div>
+    <div class="status-badge text-xs font-black uppercase">VOLT — En vivo</div>
 
     <script>
         const sbUrl = "https://raqtdnjgkspczmjgusai.supabase.co";
         const sbKey = "sb_publishable_xgP0tFJxRms5KUdaRha30Q_0xxQih5K";
-        const supabase = supabase.createClient(sbUrl, sbKey);
+        // Fixed Supabase init
+        const { createClient } = supabase;
+        const client = createClient(sbUrl, sbKey);
 
         let map = L.map('map', {zoomControl: false}).setView([-38.7183, -62.2663], 15);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-
-        // Realtime logic
-        const markers = {};
-        supabase.channel('public:trabajadores')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'trabajadores' }, payload => {
-                const w = payload.new;
-                if (w.is_online) {
-                    if (markers[w.id]) markers[w.id].setLatLng([w.lat, w.lng]);
-                    else markers[w.id] = L.circleMarker([w.lat, w.lng], {radius: 8, color: '#ffdb15', fillOpacity: 1}).addTo(map);
-                } else if (markers[w.id]) { map.removeLayer(markers[w.id]); delete markers[w.id]; }
-            }).subscribe();
-
-        function createJob() {
-            alert("Buscando el mejor Volt-Score...");
-        }
     </script>
 </body>
 </html>

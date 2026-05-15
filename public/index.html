@@ -3,169 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VOLT - Soluciones Inmediatas</title>
+    <title>VOLT - Servicios On-Demand</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; overflow-x: hidden; }
-        #map { height: 450px; border-radius: 32px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.3); }
-        .btn-volt { background: #3b82f6; transition: 0.3s; }
-        .btn-volt:hover { background: #2563eb; transform: translateY(-2px); }
-        .hero-gradient { background: linear-gradient(135deg, #6c5ce7, #a29bfe); color: white; border-radius: 0 0 60px 60px; }
-        .role-card { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .role-card:hover { transform: translateY(-15px); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #000; color: #fff; margin: 0; padding: 0; overflow: hidden; }
+        #map { height: 100vh; width: 100%; position: absolute; z-index: 0; }
+        .sidebar { width: 380px; height: 100vh; background: rgba(18, 18, 18, 0.95); backdrop-filter: blur(10px); position: relative; z-index: 10; padding: 40px; box-shadow: 20px 0 50px rgba(0,0,0,0.5); overflow-y: auto; }
+        .logo { font-weight: 900; font-size: 2.5rem; color: #ffdb15; letter-spacing: -2px; margin-bottom: 40px; display: flex; align-items: center; gap: 10px; }
+        .form-label { font-size: 0.75rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; display: block; }
+        .form-input { width: 100%; background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 15px; color: #fff; margin-bottom: 25px; outline: none; transition: 0.3s; }
+        .form-input:focus { border-color: #ffdb15; box-shadow: 0 0 15px rgba(255, 219, 21, 0.2); }
+        .btn-volt { width: 100%; background: #ffdb15; color: #000; border: none; border-radius: 12px; padding: 18px; font-weight: 900; font-size: 1rem; cursor: pointer; transition: 0.3s; text-transform: uppercase; margin-top: 10px; }
+        .btn-volt:hover { background: #fff; transform: translateY(-3px); }
+        .role-switch { display: flex; gap: 10px; margin-bottom: 30px; }
+        .role-btn { flex: 1; padding: 10px; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; border: 1px solid #333; text-align: center; }
+        .role-btn.active { background: #ffdb15; color: #000; border-color: #ffdb15; }
+        
+        /* Custom Leaflet Dark */
+        .leaflet-container { background: #111 !important; }
+        .status-badge { position: absolute; top: 20px; right: 20px; z-index: 100; background: rgba(0,0,0,0.8); padding: 15px 25px; border-radius: 15px; border: 1px solid #333; }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="p-6 flex justify-between items-center container mx-auto">
-        <span class="text-3xl font-black text-blue-600 tracking-tighter cursor-pointer">VOLT 3.0</span>
-        <div class="flex items-center gap-4">
-            <span class="bg-yellow-400 text-black px-3 py-1 rounded-full text-[10px] font-black animate-bounce text-center">NUEVA VERSIÓN</span>
-            <button onclick="location.reload()" class="bg-black text-white px-6 py-2.5 rounded-2xl font-bold text-sm shadow-xl">Inicio</button>
-        </div>
-    </nav>
+    <div id="map"></div>
 
-    <main class="container mx-auto px-4 max-w-6xl pb-20">
+    <div class="sidebar">
+        <div class="logo">⚡ VOLT</div>
         
-        <!-- PANTALLA 1: SELECTOR DE ROL -->
-        <div id="role-selector" class="py-12">
-            <div class="text-center mb-16">
-                <h1 class="text-6xl font-black text-slate-900 mb-6 tracking-tight">Servicios <span class="text-blue-600">en un clic.</span></h1>
-                <p class="text-slate-500 font-medium text-xl">Bahía Blanca elige VOLT para soluciones reales e inmediatas.</p>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
-                <!-- CLIENTE -->
-                <div onclick="initClientFlow()" class="role-card bg-white p-12 rounded-[50px] shadow-2xl shadow-blue-100 border border-slate-50 cursor-pointer hover:border-blue-400 group">
-                    <div class="text-6xl mb-8 group-hover:scale-110 transition-transform">🏠</div>
-                    <h3 class="text-3xl font-black mb-4">Busco ayuda</h3>
-                    <p class="text-slate-400 font-medium">Contrata electricistas, plomeros o técnicos verificados cerca de tu casa.</p>
-                    <div class="mt-10 text-blue-600 font-black text-lg flex items-center gap-3">
-                        SOLICITAR SERVICIO <span class="group-hover:translate-x-2 transition-transform">→</span>
-                    </div>
-                </div>
-
-                <!-- TRABAJADOR -->
-                <div onclick="initWorkerFlow()" class="role-card bg-slate-900 p-12 rounded-[50px] shadow-2xl shadow-black/10 cursor-pointer hover:bg-slate-800 transition-all group">
-                    <div class="text-6xl mb-8 group-hover:scale-110 transition-transform">🛠️</div>
-                    <h3 class="text-3xl font-black mb-4 text-white">Soy Profesional</h3>
-                    <p class="text-slate-400 font-medium">Únete a la red más grande de prestadores y aumenta tus ingresos.</p>
-                    <div class="mt-10 text-white font-black text-lg flex items-center gap-3">
-                        REGISTRARME <span class="group-hover:translate-x-2 transition-transform">→</span>
-                    </div>
-                </div>
-            </div>
+        <div class="role-switch">
+            <div class="role-btn active">Cliente</div>
+            <div class="role-btn" onclick="location.href='/onboarding.html'">Trabajador</div>
         </div>
 
-        <!-- PANTALLA 2: CLIENTE (MAPA Y PEDIDO) -->
-        <div id="client-flow" class="hidden opacity-0 transform translate-y-10 transition-all duration-500">
-            <div class="grid lg:grid-cols-12 gap-10">
-                <div class="lg:col-span-8">
-                    <div class="mb-8">
-                        <h2 class="text-4xl font-extrabold text-slate-900 tracking-tight">Mapa <span class="text-blue-600">Real-Time</span></h2>
-                        <p class="text-slate-500 font-medium">Profesionales activos en tu zona de Bahía Blanca.</p>
-                    </div>
-                    <div id="map" class="z-0"></div>
-                    <div class="mt-6 flex items-center gap-4 bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
-                        <div class="relative flex h-4 w-4">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
-                        </div>
-                        <span id="live-count" class="text-sm font-black text-green-600 uppercase tracking-widest italic">Escaneando red Volt...</span>
-                    </div>
-                </div>
+        <div id="request-flow">
+            <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter">PEDÍ UN SERVICIO</h2>
+            <p class="text-gray-500 mb-8 text-sm">Tu ubicación se detecta automáticamente del mapa</p>
 
-                <div class="lg:col-span-4 space-y-8">
-                    <div id="request-box" class="bg-white p-10 rounded-[50px] shadow-2xl shadow-blue-100 border border-slate-50">
-                        <h3 class="text-2xl font-black mb-6">Nuevo Pedido</h3>
-                        <textarea id="job-desc" class="w-full bg-slate-50 border-none rounded-3xl p-5 mb-6 text-sm font-bold focus:ring-4 focus:ring-blue-100 transition-all" rows="4" placeholder="Describe brevemente lo que necesitas..."></textarea>
-                        <button onclick="createJob()" class="w-full btn-volt text-white py-5 rounded-3xl font-black text-xl shadow-xl shadow-blue-200 uppercase tracking-tighter">Conseguir Presupuesto</button>
-                    </div>
+            <label class="form-label">TU NOMBRE</label>
+            <input type="text" id="client-name" class="form-input" placeholder="Ej: Juan Pérez">
 
-                    <!-- Quote Card -->
-                    <div id="quote-card" class="glass-card p-10 rounded-[50px] shadow-2xl border-2 border-blue-100 hidden">
-                        <div class="flex justify-between items-center mb-8">
-                            <span class="bg-blue-600 text-white text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-tighter shadow-lg shadow-blue-200">PRO RECOMENDADO</span>
-                            <span id="quote-amount" class="text-4xl font-black text-slate-900 tracking-tighter">$2.500</span>
-                        </div>
-                        <h2 id="worker-name" class="text-3xl font-black mb-2 tracking-tight text-slate-900">Marcos Electricidad</h2>
-                        <p id="worker-specialty" class="text-blue-500 font-black text-xs uppercase tracking-widest mb-10">Especialista Certificado</p>
-                        
-                        <div class="space-y-4">
-                            <button onclick="pay()" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-lg hover:bg-blue-700 shadow-xl shadow-blue-300 transition-all active:scale-95">ACEPTAR Y PAGAR</button>
-                            <button onclick="showFeedback()" class="w-full bg-white text-slate-400 py-4 rounded-3xl font-bold text-sm border-2 border-slate-100 hover:bg-slate-50 transition-all">BUSCAR OTRO</button>
-                        </div>
-                    </div>
-                </div>
+            <label class="form-label">TIPO DE SERVICIO</label>
+            <select id="service-type" class="form-input">
+                <option value="">Elegí un servicio...</option>
+                <option>Electricista</option>
+                <option>Plomero</option>
+                <option>Gasista</option>
+            </select>
+
+            <label class="form-label">DESCRIPCIÓN DEL PROBLEMA</label>
+            <textarea id="job-desc" class="form-input" rows="4" placeholder="Describí brevemente qué necesitás..."></textarea>
+
+            <label class="form-label">TU UBICACIÓN</label>
+            <div class="form-input text-green-500 font-bold text-xs flex align-center gap-2">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse mt-1"></span> Ubicación detectada ✓
             </div>
+
+            <button onclick="createJob()" class="btn-volt">⚡ Buscar profesionales</button>
         </div>
 
-        <!-- PANTALLA 3: REGISTRO TRABAJADOR -->
-        <div id="worker-flow" class="hidden opacity-0 transform translate-y-10 transition-all duration-500">
-            <div class="bg-white max-w-2xl mx-auto rounded-[60px] shadow-2xl shadow-blue-100 p-16 border border-slate-100">
-                <div class="text-center mb-12">
-                    <span class="text-blue-600 font-black text-5xl tracking-tighter">Socio VOLT.</span>
-                    <h2 class="text-2xl font-black mt-6 text-slate-900 uppercase tracking-widest">Postulación de Ingreso</h2>
-                    <p class="text-slate-400 font-medium">Adjunta tus datos para ser verificado por nuestro equipo.</p>
-                </div>
-                
-                <form id="onboardingForm" class="space-y-10">
-                    <div class="grid md:grid-cols-2 gap-8">
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Nombre Real</label>
-                            <input type="text" name="full_name" class="w-full bg-slate-50 border-none rounded-3xl p-5 focus:ring-4 focus:ring-blue-100 font-black" required>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Rubro</label>
-                            <select name="specialty" class="w-full bg-slate-50 border-none rounded-3xl p-5 focus:ring-4 focus:ring-blue-100 font-black">
-                                <option>Electricista</option>
-                                <option>Plomero</option>
-                                <option>Técnico A/C</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="relative bg-slate-50 rounded-[35px] p-10 text-center border-2 border-dashed border-slate-200 hover:border-blue-500 transition-all cursor-pointer">
-                            <input type="file" id="dni_front" class="absolute inset-0 opacity-0 cursor-pointer" required>
-                            <span class="text-slate-400 text-xs font-black uppercase">DNI Frente</span>
-                        </div>
-                        <div class="relative bg-slate-50 rounded-[35px] p-10 text-center border-2 border-dashed border-slate-200 hover:border-blue-500 transition-all cursor-pointer">
-                            <input type="file" id="dni_back" class="absolute inset-0 opacity-0 cursor-pointer" required>
-                            <span class="text-slate-400 text-xs font-black uppercase">DNI Dorso</span>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-blue-600 text-white py-6 rounded-[35px] font-black text-xl shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95">ENVIAR PARA REVISIÓN</button>
-                </form>
-
-                <div id="worker-success" class="hidden text-center py-20 scale-110">
-                    <div class="text-8xl mb-8 animate-bounce">⏳</div>
-                    <h3 class="text-3xl font-black text-slate-900 mb-4 tracking-tighter">Solicitud Enviada</h3>
-                    <p class="text-slate-500 font-medium">Revisaremos tu documentación en las próximas 24 horas.</p>
-                </div>
-            </div>
+        <div id="quote-flow" class="hidden">
+            <!-- Lógica de presupuestos aquí -->
         </div>
+    </div>
 
-    </main>
-
-    <!-- Modal Feedback -->
-    <div id="feedback-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-2xl hidden flex items-center justify-center p-6 z-[1000]">
-        <div class="bg-white p-12 rounded-[60px] max-w-md w-full shadow-2xl border border-slate-100 text-center">
-            <h3 class="text-3xl font-black mb-4 tracking-tight">¿Por qué rechazas?</h3>
-            <p class="text-slate-400 font-bold text-sm mb-12 uppercase tracking-widest">Tu opinión es vital para VOLT</p>
-            <div class="grid gap-4">
-                <button onclick="sendFeedback('caro')" class="p-6 bg-slate-50 rounded-[30px] hover:bg-red-50 hover:text-red-600 font-black text-lg transition-all text-left flex justify-between items-center">
-                    💰 Precio elevado <span>→</span>
-                </button>
-                <button onclick="sendFeedback('tardanza')" class="p-6 bg-slate-50 rounded-[30px] hover:bg-orange-50 hover:text-orange-600 font-black text-lg transition-all text-left flex justify-between items-center">
-                    ⏳ Demora mucho <span>→</span>
-                </button>
+    <div class="status-badge">
+        <div class="flex items-center gap-3">
+            <span class="relative flex h-3 w-3">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
+            </span>
+            <span class="text-xs font-black uppercase tracking-widest" id="live-count">VOLT — En vivo</span>
+        </div>
+        <div class="mt-3 space-y-2">
+            <div class="flex items-center gap-2 text-[10px] text-gray-400">
+                <div class="w-2 h-2 bg-yellow-400 rounded-full"></div> Trabajadores
+            </div>
+            <div class="flex items-center gap-2 text-[10px] text-gray-400">
+                <div class="w-2 h-2 bg-blue-500 rounded-full"></div> Tu ubicación
+            </div>
+            <div class="flex items-center gap-2 text-[10px] text-gray-400">
+                <div class="w-2 h-2 bg-red-500 rounded-full"></div> Pedidos activos
             </div>
         </div>
     </div>
@@ -175,59 +96,23 @@
         const sbKey = "sb_publishable_xgP0tFJxRms5KUdaRha30Q_0xxQih5K";
         const supabase = supabase.createClient(sbUrl, sbKey);
 
-        function initClientFlow() {
-            document.getElementById('role-selector').classList.add('hidden');
-            const flow = document.getElementById('client-flow');
-            flow.classList.remove('hidden');
-            setTimeout(() => { flow.classList.remove('opacity-0', 'translate-y-10'); map.invalidateSize(); }, 50);
-        }
+        let map = L.map('map', {zoomControl: false}).setView([-38.7183, -62.2663], 15);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
 
-        function initWorkerFlow() {
-            document.getElementById('role-selector').classList.add('hidden');
-            const flow = document.getElementById('worker-flow');
-            flow.classList.remove('hidden');
-            setTimeout(() => { flow.classList.remove('opacity-0', 'translate-y-10'); }, 50);
-        }
-
-        // MAPA
-        let map = L.map('map', {zoomControl: false}).setView([-38.7183, -62.2663], 14);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map);
-
-        // REALTIME 
+        // Realtime logic
         const markers = {};
-        supabase.channel('online-workers').on('postgres_changes', { event: '*', schema: 'public', table: 'trabajadores' }, payload => {
-            const w = payload.new;
-            if (w.is_online) {
-                if (markers[w.id]) markers[w.id].setLatLng([w.lat, w.lng]);
-                else markers[w.id] = L.circleMarker([w.lat, w.lng], {radius: 12, color: '#3b82f6', fillOpacity: 0.9}).addTo(map);
-            } else if (markers[w.id]) { map.removeLayer(markers[w.id]); delete markers[w.id]; }
-            document.getElementById('live-count').innerText = `${Object.keys(markers).length} Profesionales en línea`;
-        }).subscribe();
+        supabase.channel('public:trabajadores')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'trabajadores' }, payload => {
+                const w = payload.new;
+                if (w.is_online) {
+                    if (markers[w.id]) markers[w.id].setLatLng([w.lat, w.lng]);
+                    else markers[w.id] = L.circleMarker([w.lat, w.lng], {radius: 8, color: '#ffdb15', fillOpacity: 1}).addTo(map);
+                } else if (markers[w.id]) { map.removeLayer(markers[w.id]); delete markers[w.id]; }
+            }).subscribe();
 
-        // LOGIC
-        async function createJob() {
-            document.getElementById('request-box').classList.add('hidden');
-            document.getElementById('quote-card').classList.remove('hidden');
+        function createJob() {
+            alert("Buscando el mejor Volt-Score...");
         }
-        function showFeedback() { document.getElementById('feedback-modal').classList.remove('hidden'); }
-        function sendFeedback() { document.getElementById('feedback-modal').classList.add('hidden'); alert("Buscando alternativa..."); }
-        function pay() { alert("Redirigiendo a Mercado Pago..."); }
-
-        // ONBOARDING
-        document.getElementById('onboardingForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="animate-ping inline-block mr-3">⚡</span> PROCESANDO...';
-            
-            try {
-                // Real Supabase storage logic here (needs worker-docs bucket)
-                setTimeout(() => {
-                    e.target.classList.add('hidden');
-                    document.getElementById('worker-success').classList.remove('hidden');
-                }, 2000);
-            } catch (e) { alert("Error"); btn.disabled = false; }
-        };
     </script>
 </body>
 </html>

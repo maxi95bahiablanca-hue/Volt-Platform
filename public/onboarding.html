@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Profesional - VOLT</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+    <div class="bg-white max-w-2xl w-full rounded-[45px] shadow-2xl shadow-blue-100 p-12 border border-slate-100">
+        <div class="text-center mb-12">
+            <span class="text-blue-600 font-black text-4xl tracking-tighter">VOLT.</span>
+            <h1 class="text-2xl font-extrabold mt-4 text-slate-900">Registro de Especialista</h1>
+            <p class="text-slate-400 font-medium mt-1">Completa tu perfil para empezar a recibir pedidos.</p>
+        </div>
+
+        <form id="onboardingForm" class="space-y-8">
+            <!-- Basic Info -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ms-2">Nombre Completo</label>
+                    <input type="text" name="full_name" class="w-full bg-slate-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 font-bold" required>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ms-2">Especialidad</label>
+                    <select name="specialty" class="w-full bg-slate-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-blue-500 font-bold">
+                        <option>Electricista Matriculado</option>
+                        <option>Plomero / Gasista</option>
+                        <option>Climatización</option>
+                        <option>Soporte Técnico</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ms-2">DNI (Frente)</label>
+                    <div class="relative bg-slate-50 rounded-2xl p-6 text-center border-2 border-dashed border-slate-200 hover:border-blue-400 transition-all">
+                        <input type="file" id="dni_front" class="absolute inset-0 opacity-0 cursor-pointer" required>
+                        <span class="text-slate-400 text-xs font-bold">Subir Imagen</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ms-2">DNI (Dorso)</label>
+                    <div class="relative bg-slate-50 rounded-2xl p-6 text-center border-2 border-dashed border-slate-200 hover:border-blue-400 transition-all">
+                        <input type="file" id="dni_back" class="absolute inset-0 opacity-0 cursor-pointer" required>
+                        <span class="text-slate-400 text-xs font-bold">Subir Imagen</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ms-2">Constancia Monotributo</label>
+                    <div class="relative bg-slate-50 rounded-2xl p-6 text-center border-2 border-dashed border-slate-200 hover:border-blue-400 transition-all">
+                        <input type="file" id="monotributo" class="absolute inset-0 opacity-0 cursor-pointer" required>
+                        <span class="text-slate-400 text-xs font-bold">Subir PDF / Imagen</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ms-2">Antecedentes Penales</label>
+                    <div class="relative bg-slate-50 rounded-2xl p-6 text-center border-2 border-dashed border-slate-200 hover:border-blue-400 transition-all">
+                        <input type="file" id="background" class="absolute inset-0 opacity-0 cursor-pointer" required>
+                        <span class="text-slate-400 text-xs font-bold">Subir PDF oficial</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-3xl font-black text-lg shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all transform active:scale-95">
+                ENVIAR SOLICITUD DE ALTA
+            </button>
+        </form>
+
+        <div id="success" class="hidden text-center">
+            <div class="text-6xl mb-6">⏳</div>
+            <h2 class="text-2xl font-black text-slate-900">Solicitud en Revisión</h2>
+            <p class="text-slate-500 font-medium mt-2">Estamos verificando tu documentación. Recibirás un aviso por WhatsApp cuando tu cuenta sea activada.</p>
+            <button onclick="location.href='/'" class="mt-8 text-blue-600 font-black text-sm uppercase tracking-widest">Volver al Inicio</button>
+        </div>
+    </div>
+
+    <script>
+        const sbUrl = "https://raqtdnjgkspczmjgusai.supabase.co";
+        const sbKey = "sb_publishable_xgP0tFJxRms5KUdaRha30Q_0xxQih5K";
+        const supabase = supabase.createClient(sbUrl, sbKey);
+
+        document.getElementById('onboardingForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const formData = new FormData(e.target);
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="animate-spin inline-block mr-2">⚡</span> SUBIENDO DOCUMENTACIÓN...';
+
+            try {
+                const files = {
+                    dni_front: document.getElementById('dni_front').files[0],
+                    dni_back: document.getElementById('dni_back').files[0],
+                    monotributo: document.getElementById('monotributo').files[0],
+                    background: document.getElementById('background').files[0]
+                };
+
+                const uploadResults = {};
+
+                // Cargar cada archivo al bucket 'worker-docs'
+                for (const [key, file] of Object.entries(files)) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${Date.now()}_${key}.${fileExt}`;
+                    const { data, error } = await supabase.storage
+                        .from('worker-docs')
+                        .upload(fileName, file);
+                    
+                    if (error) throw error;
+                    uploadResults[key] = sbUrl + "/storage/v1/object/public/worker-docs/" + fileName;
+                }
+
+                // Guardar datos en la tabla 'trabajadores'
+                const { error: dbError } = await supabase.from('trabajadores').insert([{
+                    full_name: formData.get('full_name'),
+                    specialty: formData.get('specialty'),
+                    dni_front_url: uploadResults.dni_front,
+                    dni_back_url: uploadResults.dni_back,
+                    monotributo_url: uploadResults.monotributo,
+                    background_url: uploadResults.background,
+                    status: 'pending'
+                }]);
+
+                if (dbError) throw dbError;
+
+                e.target.classList.add('hidden');
+                document.getElementById('success').classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+                btn.disabled = false;
+                btn.innerText = "REINTENTAR REGISTRO";
+            }
+        };
+    </script>
+</body>
+</html>
